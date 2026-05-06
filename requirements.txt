@@ -1,0 +1,14 @@
+flask
+numpy
+pandas
+scikit-learn
+tensorflow
+keras
+matplotlib
+seaborn
+librosa
+pillow
+reportlab
+gunicorn
+imbalanced-learn
+werkzeug

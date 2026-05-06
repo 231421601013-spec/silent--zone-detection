@@ -1,0 +1,362 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+.login-wrap {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    position: relative;
+    z-index: 1;
+}
+
+/* LEFT PANEL */
+.login-left {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 80px 64px;
+    position: relative;
+}
+
+.login-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--cyan);
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.login-eyebrow::before {
+    content: '';
+    width: 32px;
+    height: 1px;
+    background: var(--cyan);
+}
+
+.login-heading {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: clamp(36px, 5vw, 60px);
+    line-height: 1.05;
+    color: #fff;
+    margin-bottom: 16px;
+}
+
+.login-heading span {
+    background: linear-gradient(135deg, var(--cyan), var(--blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.login-sub {
+    font-size: 15px;
+    color: var(--text-dim);
+    line-height: 1.7;
+    max-width: 420px;
+    margin-bottom: 48px;
+}
+
+/* LOGIN FORM CARD */
+.login-form-card {
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 40px;
+    backdrop-filter: blur(20px);
+    max-width: 440px;
+    position: relative;
+    overflow: hidden;
+}
+
+.login-form-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+}
+
+.input-group {
+    margin-bottom: 20px;
+}
+
+.input-icon-wrap {
+    position: relative;
+}
+
+.input-icon-wrap .form-control {
+    padding-left: 44px;
+}
+
+.input-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 14px;
+    pointer-events: none;
+    transition: color 0.25s;
+}
+
+.input-icon-wrap:focus-within .input-icon {
+    color: var(--cyan);
+}
+
+.btn-login {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(135deg, var(--cyan), var(--blue));
+    border: none;
+    border-radius: 12px;
+    color: var(--abyss);
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 15px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 4px 24px rgba(0,220,200,0.35);
+    margin-top: 8px;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-login::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.25), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.btn-login:hover { transform: translateY(-2px); box-shadow: 0 8px 36px rgba(0,220,200,0.5); }
+.btn-login:hover::after { opacity: 1; }
+.btn-login:active { transform: translateY(0); }
+
+.login-hint {
+    text-align: center;
+    margin-top: 16px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+/* RIGHT PANEL — Feature showcase */
+.login-right {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 80px 64px;
+    background: linear-gradient(135deg, rgba(0,220,200,0.03), rgba(0,170,255,0.03));
+    border-left: 1px solid var(--border);
+    gap: 20px;
+}
+
+.feature-card {
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    display: flex;
+    align-items: flex-start;
+    gap: 18px;
+    transition: all 0.3s;
+    animation: fadeUp 0.6s ease both;
+}
+
+.feature-card:nth-child(1) { animation-delay: 0.1s; }
+.feature-card:nth-child(2) { animation-delay: 0.2s; }
+.feature-card:nth-child(3) { animation-delay: 0.3s; }
+.feature-card:nth-child(4) { animation-delay: 0.4s; }
+
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.feature-card:hover {
+    border-color: var(--border-hot);
+    transform: translateX(4px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+
+.feature-icon {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.fi-ocean  { background: rgba(0,170,255,0.15); }
+.fi-whale  { background: rgba(0,220,200,0.15); }
+.fi-vessel { background: rgba(255,165,0,0.15); }
+.fi-report { background: rgba(0,255,136,0.15); }
+
+.feature-text h6 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    color: #fff;
+    margin-bottom: 4px;
+}
+
+.feature-text p {
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.5;
+}
+
+/* Stats strip */
+.stats-strip {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.strip-stat {
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+}
+
+.strip-stat .val {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 22px;
+    color: var(--cyan);
+}
+
+.strip-stat .lbl {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 4px;
+}
+
+@media (max-width: 900px) {
+    .login-wrap { grid-template-columns: 1fr; }
+    .login-right { display: none; }
+    .login-left { padding: 100px 24px 40px; }
+    .login-form-card { max-width: 100%; }
+}
+</style>
+
+<div class="login-wrap">
+    <!-- LEFT -->
+    <div class="login-left">
+        <div class="login-eyebrow">Marine AI Platform v2.0</div>
+        <h1 class="login-heading">
+            Ocean<br><span>Intelligence</span><br>System
+        </h1>
+        <p class="login-sub">
+            AI-powered silent zone detection using 4 trained models —
+            whale acoustics, ocean quality, AIS vessel tracking, and marine ecosystem analysis.
+        </p>
+
+        <div class="login-form-card">
+            <div style="margin-bottom:28px;">
+                <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:#fff;margin-bottom:6px;">
+                    Access Dashboard
+                </div>
+                <div style="font-size:13px;color:var(--text-dim);">Sign in to begin marine analysis</div>
+            </div>
+
+            <form method="POST">
+                <div class="input-group">
+                    <label class="form-label">Email Address</label>
+                    <div class="input-icon-wrap">
+                        <i class="fas fa-envelope input-icon"></i>
+                        <input type="email" class="form-control" name="email" placeholder="researcher@ocean.ai" required>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label class="form-label">Password</label>
+                    <div class="input-icon-wrap">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" class="form-control" name="password" placeholder="••••••••" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-login">
+                    LAUNCH ANALYSIS SYSTEM →
+                </button>
+            </form>
+
+            <p class="login-hint">Demo: any email + password to access</p>
+        </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="login-right">
+        <div>
+            <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--cyan);text-transform:uppercase;letter-spacing:2px;margin-bottom:16px;">
+                Platform Capabilities
+            </div>
+            <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:26px;color:#fff;margin-bottom:24px;">
+                4 AI Models.<br>One Decision.
+            </div>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon fi-ocean">🌊</div>
+            <div class="feature-text">
+                <h6>Ocean Quality Analysis</h6>
+                <p>pH, dissolved oxygen, turbidity & nitrate processed through GradientBoosting classifier</p>
+            </div>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon fi-whale">🐋</div>
+            <div class="feature-text">
+                <h6>Whale Spectrogram CNN</h6>
+                <p>Deep CNN trained on 497 spectrogram images, detecting whale vs silent zones at 87.9% accuracy</p>
+            </div>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon fi-vessel">🚢</div>
+            <div class="feature-text">
+                <h6>AIS Vessel Tracking</h6>
+                <p>RandomForest model trained on 1M+ AIS records, classifying 60 vessel types at 95.6% accuracy</p>
+            </div>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon fi-report">📊</div>
+            <div class="feature-text">
+                <h6>Marine Ecosystem Risk</h6>
+                <p>100% accuracy marine risk model with Low / Medium / High classification</p>
+            </div>
+        </div>
+
+        <div class="stats-strip">
+            <div class="strip-stat">
+                <div class="val">95.6%</div>
+                <div class="lbl">AIS Accuracy</div>
+            </div>
+            <div class="strip-stat">
+                <div class="val">87.9%</div>
+                <div class="lbl">Whale CNN</div>
+            </div>
+            <div class="strip-stat">
+                <div class="val">100%</div>
+                <div class="lbl">Marine Model</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

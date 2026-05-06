@@ -1,0 +1,596 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+.upload-page { padding: 88px 40px 60px; max-width: 1200px; margin: 0 auto; position: relative; z-index: 1; }
+
+.page-header { margin-bottom: 40px; }
+.page-header .eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--cyan);
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    margin-bottom: 12px;
+    display: flex; align-items: center; gap: 10px;
+}
+.page-header .eyebrow::before { content: ''; width: 24px; height: 1px; background: var(--cyan); }
+.page-header h1 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 36px;
+    color: #fff;
+    margin-bottom: 8px;
+}
+.page-header p { font-size: 14px; color: var(--text-dim); }
+
+/* STEP INDICATORS */
+.steps-bar {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 40px;
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 24px;
+    overflow-x: auto;
+}
+
+.step-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 120px;
+}
+
+.step-num {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 13px;
+    background: var(--glass-light);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    flex-shrink: 0;
+    transition: all 0.3s;
+}
+
+.step-num.active {
+    background: linear-gradient(135deg, var(--cyan), var(--blue));
+    color: var(--abyss);
+    border-color: transparent;
+    box-shadow: 0 0 16px rgba(0,220,200,0.4);
+}
+
+.step-info { display: flex; flex-direction: column; }
+.step-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.step-name {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--text-dim);
+}
+.step-name.active { color: #fff; }
+
+.step-line {
+    flex: 0 0 40px;
+    height: 1px;
+    background: var(--border);
+    margin: 0 8px;
+}
+
+/* FORM SECTIONS */
+.form-section {
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin-bottom: 20px;
+    transition: border-color 0.3s;
+}
+
+.form-section:focus-within {
+    border-color: var(--border-hot);
+    box-shadow: 0 0 0 1px rgba(0,220,200,0.1);
+}
+
+.form-section-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(0,0,0,0.15);
+}
+
+.section-icon {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+}
+
+.si-ocean  { background: rgba(0,170,255,0.15); }
+.si-whale  { background: rgba(0,220,200,0.15); }
+.si-vessel { background: rgba(255,165,0,0.15);  }
+.si-marine { background: rgba(0,255,136,0.15); }
+
+.form-section-header h5 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    color: #fff;
+    margin: 0;
+}
+
+.form-section-header p {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.form-section-body { padding: 24px; }
+
+.input-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+.input-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+/* PARAMETER INPUT with unit label */
+.param-input-wrap { position: relative; }
+.param-unit {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    pointer-events: none;
+}
+
+.param-input-wrap .form-control { padding-right: 48px; }
+
+/* RANGE HINT */
+.range-hint {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-top: 5px;
+}
+
+/* SPECTROGRAM UPLOAD */
+.upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 40px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: rgba(0,0,0,0.2);
+    position: relative;
+}
+
+.upload-zone:hover, .upload-zone.drag-over {
+    border-color: var(--cyan);
+    background: rgba(0,220,200,0.05);
+}
+
+.upload-zone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+}
+
+.upload-icon {
+    width: 56px; height: 56px;
+    border-radius: 16px;
+    background: rgba(0,220,200,0.1);
+    border: 1px solid var(--border-hot);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+    margin: 0 auto 16px;
+}
+
+.upload-zone h6 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    color: #fff;
+    margin-bottom: 6px;
+}
+
+.upload-zone p {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+}
+
+.upload-preview {
+    display: none;
+    margin-top: 16px;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--border-hot);
+}
+
+.upload-preview img {
+    width: 100%;
+    max-height: 160px;
+    object-fit: cover;
+}
+
+.upload-preview-name {
+    padding: 8px 12px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--cyan);
+    background: rgba(0,220,200,0.08);
+}
+
+/* VESSEL SELECT */
+.vessel-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+
+.vessel-option {
+    position: relative;
+}
+
+.vessel-option input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 0; height: 0;
+}
+
+.vessel-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 8px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.25s;
+    background: rgba(0,0,0,0.2);
+}
+
+.vessel-label .emoji { font-size: 24px; }
+.vessel-label .name {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.vessel-option input:checked + .vessel-label {
+    border-color: var(--cyan);
+    background: rgba(0,220,200,0.1);
+    box-shadow: 0 0 16px rgba(0,220,200,0.2);
+}
+
+.vessel-option input:checked + .vessel-label .name { color: var(--cyan); }
+.vessel-label:hover { border-color: var(--border-hot); }
+
+/* SUBMIT */
+.submit-bar {
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 28px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.submit-info h6 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    color: #fff;
+    margin-bottom: 4px;
+}
+
+.submit-info p { font-size: 13px; color: var(--text-dim); margin: 0; }
+
+.btn-analyze {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 36px;
+    background: linear-gradient(135deg, var(--cyan), var(--blue));
+    border: none;
+    border-radius: 12px;
+    color: var(--abyss);
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 4px 24px rgba(0,220,200,0.35);
+    white-space: nowrap;
+    letter-spacing: 0.5px;
+}
+
+.btn-analyze:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(0,220,200,0.5);
+}
+
+.spinner {
+    display: none;
+    width: 20px; height: 20px;
+    border: 2px solid rgba(2,11,20,0.3);
+    border-top-color: var(--abyss);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 900px) {
+    .upload-page { padding: 80px 16px 40px; }
+    .input-grid, .vessel-grid { grid-template-columns: 1fr 1fr; }
+    .input-grid-2 { grid-template-columns: 1fr; }
+    .submit-bar { flex-direction: column; }
+    .btn-analyze { width: 100%; justify-content: center; }
+}
+</style>
+
+<div class="upload-page">
+    <div class="page-header">
+        <div class="eyebrow">New Analysis Session</div>
+        <h1>Marine Zone Assessment</h1>
+        <p>Input all parameters below — 4 AI models will process and compute your risk score</p>
+    </div>
+
+    <!-- STEPS -->
+    <div class="steps-bar">
+        <div class="step-item">
+            <div class="step-num active">1</div>
+            <div class="step-info">
+                <span class="step-label">Step 1</span>
+                <span class="step-name active">Ocean Params</span>
+            </div>
+        </div>
+        <div class="step-line"></div>
+        <div class="step-item">
+            <div class="step-num active">2</div>
+            <div class="step-info">
+                <span class="step-label">Step 2</span>
+                <span class="step-name active">Vessel Type</span>
+            </div>
+        </div>
+        <div class="step-line"></div>
+        <div class="step-item">
+            <div class="step-num active">3</div>
+            <div class="step-info">
+                <span class="step-label">Step 3</span>
+                <span class="step-name active">Spectrogram</span>
+            </div>
+        </div>
+        <div class="step-line"></div>
+        <div class="step-item">
+            <div class="step-num active">4</div>
+            <div class="step-info">
+                <span class="step-label">Step 4</span>
+                <span class="step-name active">Analyze</span>
+            </div>
+        </div>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data" id="analysisForm">
+
+        <!-- SECTION 1: OCEAN PARAMETERS -->
+        <div class="form-section">
+            <div class="form-section-header">
+                <div class="section-icon si-ocean">🌊</div>
+                <div>
+                    <h5>Ocean Water Parameters</h5>
+                    <p>Processed by GradientBoosting ocean quality model</p>
+                </div>
+            </div>
+            <div class="form-section-body">
+                <div class="input-grid">
+                    <div>
+                        <label class="form-label">pH Level</label>
+                        <div class="param-input-wrap">
+                            <input type="number" step="0.01" min="0" max="14" class="form-control" name="pH" placeholder="7.4" required>
+                            <span class="param-unit">pH</span>
+                        </div>
+                        <div class="range-hint">Normal: 7.8 – 8.3</div>
+                    </div>
+                    <div>
+                        <label class="form-label">Dissolved Oxygen</label>
+                        <div class="param-input-wrap">
+                            <input type="number" step="0.01" min="0" class="form-control" name="oxygen" placeholder="6.5" required>
+                            <span class="param-unit">mg/L</span>
+                        </div>
+                        <div class="range-hint">Healthy: &gt; 6 mg/L</div>
+                    </div>
+                    <div>
+                        <label class="form-label">Turbidity</label>
+                        <div class="param-input-wrap">
+                            <input type="number" step="0.01" min="0" class="form-control" name="turbidity" placeholder="5.0" required>
+                            <span class="param-unit">NTU</span>
+                        </div>
+                        <div class="range-hint">Clear: &lt; 10 NTU</div>
+                    </div>
+                    <div>
+                        <label class="form-label">Nitrate Level</label>
+                        <div class="param-input-wrap">
+                            <input type="number" step="0.01" min="0" class="form-control" name="nitrate" placeholder="4.0">
+                            <span class="param-unit">mg/L</span>
+                        </div>
+                        <div class="range-hint">Safe: &lt; 10 mg/L</div>
+                    </div>
+                    <div>
+                        <label class="form-label">Temperature</label>
+                        <div class="param-input-wrap">
+                            <input type="number" step="0.1" class="form-control" name="temperature" placeholder="28.0">
+                            <span class="param-unit">°C</span>
+                        </div>
+                        <div class="range-hint">Indian Ocean: 26–30°C</div>
+                    </div>
+                    <div>
+                        <label class="form-label">Location (Lat)</label>
+                        <div class="param-input-wrap">
+                            <input type="number" step="0.001" class="form-control" name="LAT" placeholder="13.000">
+                            <span class="param-unit">°N</span>
+                        </div>
+                        <div class="range-hint">Indian Ocean region</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 2: VESSEL TYPE -->
+        <div class="form-section">
+            <div class="form-section-header">
+                <div class="section-icon si-vessel">🚢</div>
+                <div>
+                    <h5>AIS Vessel Classification</h5>
+                    <p>RandomForest model with 95.6% accuracy on 60 vessel types</p>
+                </div>
+            </div>
+            <div class="form-section-body">
+                <label class="form-label" style="margin-bottom:14px;">Select Vessel Type in Zone</label>
+                <div class="vessel-grid">
+                    <div class="vessel-option">
+                        <input type="radio" name="vessel_type" value="cargo" id="v_cargo">
+                        <label class="vessel-label" for="v_cargo">
+                            <span class="emoji">📦</span>
+                            <span class="name">Cargo</span>
+                        </label>
+                    </div>
+                    <div class="vessel-option">
+                        <input type="radio" name="vessel_type" value="tanker" id="v_tanker">
+                        <label class="vessel-label" for="v_tanker">
+                            <span class="emoji">🛢️</span>
+                            <span class="name">Tanker</span>
+                        </label>
+                    </div>
+                    <div class="vessel-option">
+                        <input type="radio" name="vessel_type" value="fishing" id="v_fishing">
+                        <label class="vessel-label" for="v_fishing">
+                            <span class="emoji">🎣</span>
+                            <span class="name">Fishing</span>
+                        </label>
+                    </div>
+                    <div class="vessel-option">
+                        <input type="radio" name="vessel_type" value="passenger" id="v_passenger">
+                        <label class="vessel-label" for="v_passenger">
+                            <span class="emoji">🚢</span>
+                            <span class="name">Passenger</span>
+                        </label>
+                    </div>
+                </div>
+                <!-- hidden fallback -->
+                <input type="hidden" name="vessel_type_fallback" value="cargo">
+            </div>
+        </div>
+
+        <!-- SECTION 3: WHALE SPECTROGRAM -->
+        <div class="form-section">
+            <div class="form-section-header">
+                <div class="section-icon si-whale">🐋</div>
+                <div>
+                    <h5>Whale Spectrogram Upload</h5>
+                    <p>CNN model trained on 497 images — classifies silent vs active whale zones</p>
+                </div>
+            </div>
+            <div class="form-section-body">
+                <div class="upload-zone" id="uploadZone">
+                    <input type="file" name="spectrogram" id="spectrogramInput" accept=".png,.jpg,.jpeg" required>
+                    <div class="upload-icon">🌊</div>
+                    <h6>Drop Spectrogram Image Here</h6>
+                    <p>PNG or JPG — underwater audio spectrogram (128×128 recommended)</p>
+                    <span class="badge badge-info">
+                        <i class="fas fa-info-circle"></i> Supports whale vocal frequency images
+                    </span>
+                    <div class="upload-preview" id="previewBox">
+                        <img id="previewImg" src="" alt="preview">
+                        <div class="upload-preview-name" id="previewName"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SUBMIT -->
+        <div class="submit-bar">
+            <div class="submit-info">
+                <h6>Ready to Analyze?</h6>
+                <p>All 4 models will run simultaneously — results in seconds</p>
+            </div>
+            <button type="submit" class="btn-analyze" id="submitBtn">
+                <div class="spinner" id="spinner"></div>
+                <i class="fas fa-satellite-dish" id="submitIcon"></i>
+                <span id="submitText">RUN AI ANALYSIS</span>
+            </button>
+        </div>
+
+    </form>
+</div>
+
+<script>
+// Preview spectrogram
+document.getElementById('spectrogramInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+        document.getElementById('previewImg').src = ev.target.result;
+        document.getElementById('previewName').textContent = '✓ ' + file.name;
+        document.getElementById('previewBox').style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+});
+
+// Drag & drop highlight
+const zone = document.getElementById('uploadZone');
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('drag-over'); });
+
+// Submit loading state
+document.getElementById('analysisForm').addEventListener('submit', function() {
+    document.getElementById('spinner').style.display = 'block';
+    document.getElementById('submitIcon').style.display = 'none';
+    document.getElementById('submitText').textContent = 'ANALYZING...';
+    document.getElementById('submitBtn').disabled = true;
+});
+
+// Require vessel type
+document.getElementById('analysisForm').addEventListener('submit', function(e) {
+    const checked = document.querySelector('input[name="vessel_type"]:checked');
+    if (!checked) {
+        e.preventDefault();
+        alert('Please select a vessel type');
+    }
+});
+</script>
+{% endblock %}
